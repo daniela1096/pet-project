@@ -5,6 +5,7 @@ import co.com.sofka.petproject.rentpayment.models.documents.PaymentDocument;
 import co.com.sofka.petproject.rentpayment.models.model.Payment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
@@ -25,5 +26,17 @@ public class PaymentServiceImpl implements PaymentService {
                         .build())
                 .flatMap(paymentRepository::save)
                 .thenReturn(payment);
+    }
+
+    @Override
+    public Flux<Payment> findAll() {
+        return paymentRepository.findAll()
+                .map(paymentDocument -> Payment.builder()
+                        .id(paymentDocument.getId())
+                        .tenantDocument(paymentDocument.getTenantDocument())
+                        .paidValue(paymentDocument.getPaidValue())
+                        .payDate(paymentDocument.getPayDate())
+                        .apartmentId(paymentDocument.getApartmentId())
+                        .build());
     }
 }
