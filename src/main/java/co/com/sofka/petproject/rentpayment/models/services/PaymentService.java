@@ -9,4 +9,6 @@ public interface PaymentService {
     Mono<Payment> save(Payment payment);
 
     Flux<Payment> findAll();
+
+    Mono<Payment> findById(String id);
 }

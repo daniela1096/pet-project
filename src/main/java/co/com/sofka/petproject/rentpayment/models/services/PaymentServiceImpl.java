@@ -39,4 +39,16 @@ public class PaymentServiceImpl implements PaymentService {
                         .apartmentId(paymentDocument.getApartmentId())
                         .build());
     }
+
+    @Override
+    public Mono<Payment> findById(String id) {
+        return paymentRepository.findById(id)
+                .map(paymentDocument -> Payment.builder()
+                        .id(paymentDocument.getId())
+                        .tenantDocument(paymentDocument.getTenantDocument())
+                        .paidValue(paymentDocument.getPaidValue())
+                        .payDate(paymentDocument.getPayDate())
+                        .apartmentId(paymentDocument.getApartmentId())
+                        .build());
+    }
 }

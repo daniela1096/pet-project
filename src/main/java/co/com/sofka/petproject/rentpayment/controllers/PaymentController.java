@@ -35,4 +35,13 @@ public class PaymentController {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(paymentService.findAll()));
     }
+
+    @GetMapping("/{id}")
+    public Mono<ResponseEntity<Payment>> findById(@PathVariable String id) {
+        return paymentService.findById(id)
+                .map(payment -> ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(payment))
+                .defaultIfEmpty(ResponseEntity.notFound().build());
+    }
 }
