@@ -14,7 +14,9 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -63,6 +65,33 @@ class PaymentControllerTest {
                 .expectStatus().isOk();
 
         Mockito.verify(paymentService, times(1)).save(refEq(payment));
+    }
+
+    @Test
+    void findAll() {
+
+        Payment payment = new Payment();
+        payment.setId("12");
+        payment.setTenantDocument("123456789");
+        payment.setPaidValue(123.0);
+        payment.setApartmentId("code1");
+
+        List<Payment> list = new ArrayList<Payment>();
+        list.add(payment);
+
+        Flux<Payment> paymentFlux = Flux.fromIterable(list);
+
+        Mockito.when(paymentService.findAll()).thenReturn(paymentFlux);
+
+        client.get()
+                .uri("/api/payments")
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBodyList(PaymentDocument.class);
+
+        Mockito.verify(paymentService, times(1)).findAll();
     }
 
 
