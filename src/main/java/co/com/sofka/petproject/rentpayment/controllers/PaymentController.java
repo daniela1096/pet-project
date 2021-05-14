@@ -1,6 +1,8 @@
 package co.com.sofka.petproject.rentpayment.controllers;
 
+import co.com.sofka.petproject.rentpayment.models.dto.PaymentDTO;
 import co.com.sofka.petproject.rentpayment.models.model.Payment;
+import co.com.sofka.petproject.rentpayment.models.services.ApartmentService;
 import co.com.sofka.petproject.rentpayment.models.services.PaymentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +19,13 @@ public class PaymentController {
 
     @Autowired
     private final PaymentService paymentService;
+    @Autowired
+    private final ApartmentService apartmentService;
 
     @Autowired
-    public PaymentController(PaymentService paymentService) {
+    public PaymentController(PaymentService paymentService, ApartmentService apartmentService) {
         this.paymentService = paymentService;
+        this.apartmentService = apartmentService;
     }
 
     @PostMapping
@@ -37,8 +42,20 @@ public class PaymentController {
     }
 
     @GetMapping("/{id}")
-    public Mono<ResponseEntity<Payment>> findById(@PathVariable String id) {
+    public Mono<ResponseEntity<PaymentDTO>> findById(@PathVariable String id) {
         return paymentService.findById(id)
+                .map(payment -> PaymentDTO.builder()
+                        .id(payment.getId())
+                        .tenantDocument(payment.getTenantDocument())
+                        .paidValue(payment.getPaidValue())
+                        .payDate(payment.getPayDate())
+                        .apartmentId(payment.getApartmentId())
+                        .build())
+                .flatMap(paymentDTO -> apartmentService.findById(paymentDTO.getApartmentId())
+                        .map(apartment -> paymentDTO.toBuilder()
+                                .apartmentName(apartment.getName())
+                                .apartmentAddress(apartment.getAddress())
+                                .build()))
                 .map(payment -> ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(payment))

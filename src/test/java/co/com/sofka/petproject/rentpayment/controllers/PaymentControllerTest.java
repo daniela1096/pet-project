@@ -1,7 +1,10 @@
 package co.com.sofka.petproject.rentpayment.controllers;
 
+import co.com.sofka.petproject.rentpayment.models.documents.ApartmentDocument;
 import co.com.sofka.petproject.rentpayment.models.documents.PaymentDocument;
+import co.com.sofka.petproject.rentpayment.models.dto.PaymentDTO;
 import co.com.sofka.petproject.rentpayment.models.model.Payment;
+import co.com.sofka.petproject.rentpayment.models.services.ApartmentService;
 import co.com.sofka.petproject.rentpayment.models.services.PaymentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,11 +31,13 @@ class PaymentControllerTest {
 
     @MockBean
     PaymentService paymentService;
+    @MockBean
+    ApartmentService apartmentService;
 
     private PaymentDocument payment;
 
     @BeforeEach
-    public void setup(){
+    public void setup() {
         payment = PaymentDocument.builder()
                 .id(UUID.randomUUID().toString())
                 .tenantDocument("1214735811")
@@ -100,9 +105,16 @@ class PaymentControllerTest {
         payment.setPaidValue(123.0);
         payment.setApartmentId("code1");
 
+        ApartmentDocument apartment = new ApartmentDocument();
+        apartment.setId("code1");
+        apartment.setName("name1");
+        apartment.setAddress("address1");
+
         Mono<Payment> paymentMono = Mono.just(payment);
+        Mono<ApartmentDocument> apartmentMono = Mono.just(apartment);
 
         Mockito.when(paymentService.findById("12")).thenReturn(paymentMono);
+        Mockito.when(apartmentService.findById("code1")).thenReturn(apartmentMono);
 
         client.get()
                 .uri("/api/payments".concat("/{id}"), Collections.singletonMap("id", payment.getId()))
@@ -110,11 +122,10 @@ class PaymentControllerTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().contentType(MediaType.APPLICATION_JSON)
-                .expectBody(Payment.class);
+                .expectBody(PaymentDTO.class);
 
         Mockito.verify(paymentService, times(1)).findById("12");
 
     }
-
 
 }
