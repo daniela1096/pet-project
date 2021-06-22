@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import javax.validation.constraints.Pattern;
 import java.util.Date;
 
 @Getter

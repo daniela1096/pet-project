@@ -1,16 +1,23 @@
 package co.com.sofka.petproject.rentpayment.controllers;
 
 import co.com.sofka.petproject.rentpayment.models.dto.PaymentDTO;
+import co.com.sofka.petproject.rentpayment.models.exception.RentPaymentErrorEnum;
+import co.com.sofka.petproject.rentpayment.models.exception.RentPaymentException;
 import co.com.sofka.petproject.rentpayment.models.model.Payment;
 import co.com.sofka.petproject.rentpayment.models.services.ApartmentService;
 import co.com.sofka.petproject.rentpayment.models.services.PaymentService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Objects;
 
 @Slf4j
 @RestController
@@ -30,7 +37,11 @@ public class PaymentController {
 
     @PostMapping
     public Mono<Payment> savePayment(@RequestBody Payment payment) {
-        return paymentService.save(payment);
+        log.info("PAYMENT: {}", payment.getTenantDocument());
+        return Mono.just(payment)
+                .filter(paymentModel -> StringUtils.isNotEmpty(paymentModel.getTenantDocument()))
+                .switchIfEmpty(Mono.defer(() -> Mono.error(new RentPaymentException(RentPaymentErrorEnum.THE_FIELD_IS_REQUIRED))))
+                .flatMap(paymentService::save);
     }
 
     @GetMapping
