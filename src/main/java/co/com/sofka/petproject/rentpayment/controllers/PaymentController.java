@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Objects;
 
 @Slf4j
@@ -37,7 +39,7 @@ public class PaymentController {
     public Mono<Payment> savePayment(@RequestBody Payment payment) {
         log.info("PAYMENT: {}", payment.getTenantDocument());
         return Mono.just(payment)
-                .filter(payment1 -> StringUtils.isNotEmpty(payment1.getTenantDocument()))
+                .filter(paymentModel -> StringUtils.isNotEmpty(paymentModel.getTenantDocument()))
                 .switchIfEmpty(Mono.defer(() -> Mono.error(new RentPaymentException(RentPaymentErrorEnum.THE_FIELD_IS_REQUIRED))))
                 .flatMap(paymentService::save);
     }

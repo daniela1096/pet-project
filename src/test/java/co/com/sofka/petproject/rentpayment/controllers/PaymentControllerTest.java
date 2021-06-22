@@ -2,7 +2,9 @@ package co.com.sofka.petproject.rentpayment.controllers;
 
 import co.com.sofka.petproject.rentpayment.models.documents.ApartmentDocument;
 import co.com.sofka.petproject.rentpayment.models.documents.PaymentDocument;
+import co.com.sofka.petproject.rentpayment.models.dto.ErrorResponseDTO;
 import co.com.sofka.petproject.rentpayment.models.dto.PaymentDTO;
+import co.com.sofka.petproject.rentpayment.models.exception.RentPaymentErrorEnum;
 import co.com.sofka.petproject.rentpayment.models.model.Payment;
 import co.com.sofka.petproject.rentpayment.models.services.ApartmentService;
 import co.com.sofka.petproject.rentpayment.models.services.PaymentService;
@@ -22,12 +24,12 @@ import reactor.core.publisher.Mono;
 
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 
 @AutoConfigureWebTestClient
-//@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @RunWith(SpringRunner.class)
 @WebFluxTest(PaymentController.class)
 class PaymentControllerTest {
@@ -82,6 +84,40 @@ class PaymentControllerTest {
     }
 
     @Test
+    void fieldRequiredException() {
+        Payment payment = Payment.builder()
+                .id("123")
+                .tenantDocument("")
+                .apartmentId("code2")
+                .paidValue(122.3)
+                .payDate(new Date())
+                .build();
+
+        Payment mockPayment = mock(Payment.class);
+        Mono<Payment> paymentMono = Mono.just(payment);
+
+        Mockito.when(this.paymentService.save(Mockito.any(Payment.class))).thenReturn(paymentMono);
+        Mockito.when(mockPayment.getTenantDocument()).thenReturn("");
+
+        ErrorResponseDTO errorResponseDTO = ErrorResponseDTO.builder()
+                .message(RentPaymentErrorEnum.THE_FIELD_IS_REQUIRED.name())
+                .build();
+
+        client.post()
+                .uri("/api/payments")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .body(Mono.just(payment), PaymentDocument.class)
+                .exchange()
+                .expectStatus()
+                .is5xxServerError()
+                .expectBody(ErrorResponseDTO.class);
+
+        assertThat((errorResponseDTO).getMessage()).contains("THE_FIELD_IS_REQUIRED");
+
+    }
+
+    @Test
     void findAll() {
 
         Payment payment = new Payment();
@@ -90,7 +126,7 @@ class PaymentControllerTest {
         payment.setPaidValue(123.0);
         payment.setApartmentId("code1");
 
-        List<Payment> list = new ArrayList<Payment>();
+        List<Payment> list = new ArrayList<>();
         list.add(payment);
 
         Flux<Payment> paymentFlux = Flux.fromIterable(list);
