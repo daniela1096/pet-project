@@ -38,9 +38,17 @@ public class PaymentController {
     @PostMapping
     public Mono<Payment> savePayment(@RequestBody Payment payment) {
         log.info("PAYMENT: {}", payment.getTenantDocument());
+        Calendar date = Calendar.getInstance();
+        Date paymentDate = Objects.nonNull(payment.getPayDate()) ? payment.getPayDate() : date.getTime();
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(paymentDate);
+
         return Mono.just(payment)
                 .filter(paymentModel -> StringUtils.isNotEmpty(paymentModel.getTenantDocument()))
                 .switchIfEmpty(Mono.defer(() -> Mono.error(new RentPaymentException(RentPaymentErrorEnum.THE_FIELD_IS_REQUIRED))))
+                .filter(paymentModel -> (cal.get(Calendar.DAY_OF_MONTH) % 2 ) == 0)
+                .switchIfEmpty(Mono.defer(() -> Mono.error(new RentPaymentException(RentPaymentErrorEnum.PAYMENT_CANNOT_BE_MADE_ON_AN_ODD_DAY))))
                 .flatMap(paymentService::save);
     }
 

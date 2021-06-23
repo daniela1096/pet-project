@@ -53,13 +53,16 @@ class PaymentControllerTest {
     }
 
     @Test
-    void savePayment() {
+    void savePaymentSuccessful() {
+        Calendar date = Calendar.getInstance();
+        date.set(Calendar.DAY_OF_MONTH, 2);
+
         Payment payment = Payment.builder()
                 .id("123")
                 .tenantDocument("1214735811")
                 .apartmentId("code2")
                 .paidValue(122.3)
-                .payDate(new Date())
+                .payDate(date.getTime())
                 .build();
 
         Payment mockPayment = mock(Payment.class);
@@ -81,6 +84,34 @@ class PaymentControllerTest {
 
         assertEquals(payment.getTenantDocument(), mockPayment.getTenantDocument());
 
+    }
+
+    @Test
+    void notSavePayment() {
+        Payment payment = Payment.builder()
+                .id("123")
+                .tenantDocument("")
+                .apartmentId("code2")
+                .paidValue(122.3)
+                .payDate(new Date())
+                .build();
+
+        Payment mockPayment = mock(Payment.class);
+
+        Mono<Payment> paymentMono = Mono.just(payment);
+
+        Mockito.when(this.paymentService.save(Mockito.any(Payment.class))).thenReturn(paymentMono);
+        Mockito.when(mockPayment.getTenantDocument()).thenReturn("");
+
+
+        client.post()
+                .uri("/api/payments")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .body(Mono.just(payment), PaymentDocument.class)
+                .exchange()
+                .expectStatus()
+                .is5xxServerError();
     }
 
     @Test
