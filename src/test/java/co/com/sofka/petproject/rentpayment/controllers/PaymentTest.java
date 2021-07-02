@@ -42,4 +42,19 @@ public class PaymentTest {
         assertThat(transactionMono.block()).isNotNull();
     }
 
+    @Test
+    public void ErrorToSaveTest(){
+
+        payment = Payment.builder()
+                .id(UUID.randomUUID().toString())
+                .tenantDocument("")
+                .build();
+
+        Mockito.when(paymentService.save(any())).thenReturn(Mono.just(payment));
+
+        Mono<Payment> transactionMono = paymentController.savePayment(payment);
+
+        assertThat(transactionMono.materialize().block().getThrowable().getMessage()).contains("THE_FIELD_IS_REQUIRED");
+    }
+
 }
